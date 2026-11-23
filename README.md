@@ -74,8 +74,8 @@ node tools/web_selftest.js
 
 ### 1. 克隆仓库
 ```bash
-git clone https://github.com/liqingw/-.git 余烬禁区
-cd 余烬禁区
+git clone https://github.com/liqingw/Ember-Forbidden-Zone.git
+cd Ember-Forbidden-Zone
 ```
 
 ### 2. 日常开发流程（分支 + Pull Request）
