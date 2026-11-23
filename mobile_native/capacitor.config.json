@@ -1,0 +1,8 @@
+{
+  "appId": "com.ashen.exclusionzone",
+  "appName": "余烬禁区",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}

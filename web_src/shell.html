@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0910">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>余烬禁区 4.0 · 网页版</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; height: 100dvh; overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 0%, #1d1930 0%, #0a0910 62%, #060509 100%),
+      repeating-linear-gradient(90deg, rgba(104,222,245,.025) 0 1px, transparent 1px 28px);
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    color: #b9b4cc; user-select: none; -webkit-user-select: none;
+    -webkit-touch-callout: none; touch-action: none;
+  }
+  #wrap {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    box-sizing: border-box;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  #stage { position: relative; line-height: 0; border-radius: 5px; overflow: hidden;
+           touch-action: none;
+           box-shadow: 0 0 0 1px #2f2b45a8, 0 22px 70px #000000b0; }
+  canvas { display: block; background: #0a0a10; cursor: none;
+           image-rendering: pixelated; image-rendering: crisp-edges; }
+  #tip { font-size: 12px; color: #6c6884; letter-spacing: .5px; text-align: center; }
+  body.mobile-mode #tip { display: none; }
+  body.mobile-mode #stage { border-radius: 0; overflow: visible; }
+  #tip b { color: #ffd77a; font-weight: normal; }
+  #loading {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; background: #0a0a10; color: #ffd77a;
+    font-size: 14px; letter-spacing: 3px;
+  }
+  #perf { position: absolute; left: 8px; top: 6px; display: none;
+          z-index: 30; pointer-events: none; padding: 3px 6px;
+          font: 12px monospace; color: #d7ffbd; background: #1118; }
+  /* ---- 手机端半透明摇杆（需求 12） ---- */
+  #pad {
+    position: fixed; left: 0; top: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 40; display: none;
+  }
+  #pad.on { display: block; }
+  #stick-base, #stick-knob {
+    position: fixed; border-radius: 50%; pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  #stick-base {
+    width: 116px; height: 116px;
+    border: 2px solid rgba(104,222,245,.45);
+    background: radial-gradient(circle, rgba(104,222,245,.08) 0%, rgba(20,24,42,.38) 68%, rgba(104,222,245,.14) 100%);
+    box-shadow: inset 0 0 18px rgba(104,222,245,.16), 0 0 12px rgba(10,12,24,.45);
+    backdrop-filter: blur(2px);
+  }
+  #stick-knob {
+    width: 50px; height: 50px;
+    background: radial-gradient(circle at 35% 35%, rgba(220,250,255,.78), rgba(104,200,240,.46));
+    border: 2px solid rgba(185,245,255,.82);
+    box-shadow: 0 0 12px rgba(104,222,245,.38);
+  }
+  #btn-fire, #btn-dash, #btn-act, #btn-swap, #btn-skill, #btn-menu, #btn-fs {
+    position: absolute; border-radius: 50%; pointer-events: auto;
+    display: none; align-items: center; justify-content: center;
+    color: rgba(255,245,215,.92); font-size: 13px; letter-spacing: 1px;
+    background: radial-gradient(circle at 35% 30%, rgba(56,50,82,.62), rgba(22,20,34,.70));
+    border: 2px solid rgba(200,190,250,.48);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 4px 12px rgba(0,0,0,.45);
+    -webkit-tap-highlight-color: transparent; touch-action: none;
+    box-sizing: border-box; overflow: hidden;
+    transition: border-color .12s, background-color .12s, filter .12s, box-shadow .12s;
+  }
+  #btn-fire .btn-lbl, #btn-dash .btn-lbl, #btn-act .btn-lbl,
+  #btn-swap .btn-lbl, #btn-skill .btn-lbl, #btn-menu .btn-lbl, #btn-fs .btn-lbl {
+    position: relative; z-index: 2; pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,.85);
+  }
+  #btn-fire {
+    width: 86px; height: 86px; right: 20px; bottom: 18px;
+    background: radial-gradient(circle, rgba(255,168,78,.28) 0%, rgba(58,34,26,.68) 100%);
+    border-color: rgba(255,208,128,.86); font-size: 13px; font-weight: bold;
+    box-shadow: inset 0 0 14px rgba(255,180,95,.24), 0 0 16px rgba(255,170,80,.22);
+  }
+  #fire-knob {
+    position: absolute; left: 50%; top: 50%; width: 34px; height: 34px;
+    box-sizing: border-box; border-radius: 50%; pointer-events: none; z-index: 1;
+    border: 2px solid rgba(255,240,195,.95);
+    background: radial-gradient(circle, rgba(255,220,145,.72), rgba(255,150,70,.42));
+    transform: translate(-50%, -50%);
+  }
+  #btn-dash { width: 54px; height: 54px; right: 118px; bottom: 66px; font-size: 12px;
+              border-color: rgba(110,210,255,.68); }
+  #btn-act  { width: 58px; height: 58px; right: 24px; bottom: 118px; font-size: 12px; }
+  #btn-swap { width: 48px; height: 48px; right: 120px; bottom: 12px; font-size: 12px;
+              border-color: rgba(190,215,235,.54); }
+  #btn-skill { width: 54px; height: 54px; right: 98px; bottom: 132px; font-size: 12px;
+               border-color: rgba(188,143,255,.72); }
+  #btn-menu { width: 42px; height: 30px; right: 10px; top: 8px; border-radius: 8px; font-size: 11px; }
+  #btn-fs { width: 42px; height: 30px; right: 58px; top: 8px; border-radius: 8px; font-size: 11px;
+            z-index: 45; border-color: rgba(110,210,255,.72); }
+  #btn-fs.is-fs { opacity: 0.42 !important; border-color: rgba(160,180,210,.38); }
+  .cd-mask {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+    background: rgba(10, 9, 16, .68); pointer-events: none; z-index: 1;
+  }
+  .cd-text {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    z-index: 3; font: bold 13px monospace; color: #fff4d6;
+    text-shadow: 0 1px 2px #000; pointer-events: none;
+  }
+  .cooling { filter: grayscale(0.6) brightness(0.75); border-color: rgba(150,146,172,.35); }
+  .cooling .btn-lbl { opacity: 0.25; }
+  .cooling .cd-text { display: flex; }
+  .dimmed { opacity: 0.28 !important; border-color: rgba(150,146,172,.28); }
+  #btn-act.idle { opacity: 0.26 !important; border-color: rgba(150,146,172,.28); }
+  #btn-act.ready {
+    border-color: rgba(120,220,180,.92); background: rgba(34,76,66,.65);
+    box-shadow: 0 0 12px rgba(120,220,180,.42); color: #eafff6;
+  }
+  #btn-act.confirm {
+    border-color: rgba(255,214,96,.98); background: rgba(96,68,24,.78);
+    color: #fff5cc; animation: btn-pulse .75s infinite alternate;
+  }
+  @keyframes btn-pulse {
+    from { box-shadow: 0 0 6px rgba(255,206,74,.45); }
+    to   { box-shadow: 0 0 16px rgba(255,216,100,.90); }
+  }
+  #btn-fire.hit, #btn-dash.hit, #btn-act.hit, #btn-swap.hit, #btn-skill.hit, #btn-menu.hit, #btn-fs.hit {
+    background: rgba(120,96,200,.62); border-color: rgba(255,240,190,.9);
+    filter: brightness(1.22);
+  }
+  @media (max-height: 400px) {
+    #btn-fire { width: 78px; height: 78px; right: 14px; bottom: 12px; }
+    #btn-dash { width: 48px; height: 48px; right: 102px; bottom: 54px; }
+    #btn-skill { width: 48px; height: 48px; right: 86px; bottom: 112px; }
+    #btn-swap { width: 44px; height: 44px; right: 104px; bottom: 8px; }
+    #btn-act  { width: 52px; height: 52px; right: 18px; bottom: 100px; }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #pad.on { display: none; }   /* 桌面端即使误判也不显示摇杆 */
+  }
+  @media (orientation: portrait) and (pointer: coarse) {
+    body.mobile-mode #stage::after {
+      content: '横屏游玩可获得更大的操作区域';
+      position: absolute; left: 50%; top: 3%; transform: translateX(-50%);
+      color: #ffe1a2; background: #14121dbb; padding: 5px 8px;
+      font: 12px sans-serif; white-space: nowrap; pointer-events: none;
+    }
+  }
+</style>
+</head>
+<body>
+<span id="__sb"></span><span id="__sk"></span>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="cv" width="640" height="360"></canvas>
+    <div id="loading">正在加载素材…</div>
+    <div id="perf"></div>
+  </div>
+  <div id="tip">
+    <b>WASD</b> 移动 · <b>鼠标</b> 瞄准 · <b>左键</b> 射击 · <b>Shift</b> 冲刺 ·
+    <b>E</b> 交互 · <b>ESC</b> 暂停 · <b>F11</b> 全屏 · <b>M</b> 静音
+  </div>
+</div>
+<script>/*__ASSETS__*/</script>
+<script>/*__DATA__*/</script>
+<script>/*__NATIVE_STORAGE__*/</script>
+<script>/*__GAME__*/</script>
+<script>/*__TOUCH__*/</script>
+<script>
+if ('serviceWorker' in navigator &&
+    !(window.Capacitor && window.Capacitor.isNativePlatform()) &&
+    (location.protocol === 'https:' || location.hostname === 'localhost' ||
+     location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

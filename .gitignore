@@ -1,0 +1,20 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local temporary & test data
+_tmp/
+
+# Build & packaging outputs
+build/
+dist/
+node_modules/
+*.egg-info/
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

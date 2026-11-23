@@ -1,0 +1,11 @@
+frozen=False
+assets_root=D:\Projects\余烬禁区-源码与3.5及3.3.3成品-协同包\游戏源码\assets
+missing_assets=[]
+placeholder_keys=[]
+font=D:\Projects\余烬禁区-源码与3.5及3.3.3成品-协同包\游戏源码\assets\font.ttf
+audio_source=off enabled=False sounds=0
+init_seconds=0.11
+frames=1500 state=playing floor=1 kills=0 coins=3 hp=12 enemies=0
+present=ok
+screens=ok
+RESULT=PASS

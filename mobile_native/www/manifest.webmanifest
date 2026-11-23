@@ -1,0 +1,9 @@
+{
+  "name": "余烬禁区",
+  "short_name": "余烬禁区",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0910",
+  "theme_color": "#0a0910"
+}
